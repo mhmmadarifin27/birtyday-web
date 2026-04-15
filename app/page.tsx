@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Lock, Delete, Gift, ArrowRight, Flower, Sparkles, Play, Pause, Camera, Stars, Music } from "lucide-react";
+import { Heart, Lock, Delete, Gift, ArrowRight, ArrowLeft, Flower, Sparkles, Play, Pause, Camera, Stars, Music } from "lucide-react";
 
 export default function BirthdayApp() {
   const [step, setStep] = useState(1);
@@ -61,21 +61,22 @@ Aku berjanji akan selalu ada buat kamu. Selamat ulang tahun, sayang. Semoga baha
 
   const startExperience = () => {
     if (bgmRef.current) {
-      bgmRef.current.volume = 0.4;
+      bgmRef.current.volume = 0.5; // Normal volume
       bgmRef.current.play().catch(e => console.log("Audio blocked by browser"));
     }
     setStep(2);
   };
 
+  // FIX AUDIO UNTUK iPHONE (Di-pause sepenuhnya bukan dikecilkan)
   const toggleVN = () => {
     if (!vnRef.current || !bgmRef.current) return;
     if (isVnPlaying) {
       vnRef.current.pause();
-      bgmRef.current.volume = 0.4; 
+      bgmRef.current.play(); // Lanjut putar lagu BGM
       setIsVnPlaying(false);
     } else {
+      bgmRef.current.pause(); // Pause BGM biar suara VN jelas di iOS
       vnRef.current.play();
-      bgmRef.current.volume = 0.05; 
       setIsVnPlaying(true);
     }
   };
@@ -126,10 +127,7 @@ Aku berjanji akan selalu ada buat kamu. Selamat ulang tahun, sayang. Semoga baha
           }}
           transition={{ duration: 4 + Math.random() * 3, repeat: Infinity, ease: "easeInOut" }}
           className="absolute"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-          }}
+          style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }}
         >
           {i % 2 === 0 ? <Heart className="text-pink-200 w-6 h-6 fill-pink-100" /> : <Stars className="text-pink-300 w-5 h-5" />}
         </motion.div>
@@ -143,7 +141,7 @@ Aku berjanji akan selalu ada buat kamu. Selamat ulang tahun, sayang. Semoga baha
       <audio ref={bgmRef} src="/bgm.mp3" loop />
       <audio ref={vnRef} src="/vn.mp3" onEnded={() => {
         setIsVnPlaying(false);
-        if (bgmRef.current) bgmRef.current.volume = 0.4;
+        if (bgmRef.current) bgmRef.current.play(); // Lanjut putar BGM otomatis pas VN habis
       }} />
 
       <div className="relative w-full max-w-md h-[100dvh] sm:h-[850px] sm:max-h-[90vh] bg-[#FFF5F8] sm:rounded-[40px] sm:shadow-[0_20px_50px_rgba(244,114,182,0.2)] overflow-hidden border-4 border-white flex flex-col z-10">
@@ -157,7 +155,6 @@ Aku berjanji akan selalu ada buat kamu. Selamat ulang tahun, sayang. Semoga baha
           {/* SCREEN 1: INTRO */}
           {step === 1 && (
             <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -50 }} className="relative z-10 absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-              
               <motion.div animate={{ y: [0, -15, 0], scale: [1, 1.02, 1] }} transition={{ repeat: Infinity, duration: 3 }} className="mb-10 relative">
                 <div className="w-40 h-40 bg-gradient-to-tr from-pink-200 to-pink-100 rounded-[2rem] rotate-3 flex items-center justify-center shadow-xl border-4 border-white relative z-10">
                   <Gift className="w-20 h-20 text-pink-500 drop-shadow-sm" />
@@ -204,103 +201,115 @@ Aku berjanji akan selalu ada buat kamu. Selamat ulang tahun, sayang. Semoga baha
             </motion.div>
           )}
 
-          {/* SCREEN 3: SLIDESHOW 5 FOTO BERVARIASI DENGAN INDIKATOR MINIMALIS */}
+          {/* SCREEN 3: SLIDESHOW (PERBAIKAN LAYOUT TENGAH & TOMBOL KEMBALI) */}
           {step === 3 && (
-            <motion.div key="slideshow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -50 }} className="relative z-10 absolute inset-0 flex flex-col items-center justify-center p-6">
+            <motion.div key="slideshow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -50 }} className="relative z-10 absolute inset-0 flex flex-col p-6">
               
-              <div className="absolute top-8 w-full px-8 flex justify-between items-center">
+              {/* Header */}
+              <div className="w-full flex justify-between items-center mt-2">
                 <span className="text-pink-500 font-bold text-xs uppercase tracking-widest bg-white/80 px-4 py-2 rounded-full shadow-sm backdrop-blur-md">
                   Memory {currentSlide + 1} / {MEMORIES.length}
                 </span>
                 <Camera className="w-6 h-6 text-pink-400" />
               </div>
 
-              {/* Area Frame Foto */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSlide}
-                  initial={{ opacity: 0, scale: 0.9, y: 15 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, x: -50 }}
-                  transition={{ duration: 0.3, type: "spring" }}
-                  className="w-full flex justify-center items-center mt-6"
-                >
-                  {/* STYLE 1: Polaroid Miring Kanan */}
-                  {MEMORIES[currentSlide].style === "polaroid-right" && (
-                    <div className="bg-white p-4 pb-12 rounded-lg shadow-xl rotate-3 relative w-full max-w-[280px]">
-                      <div className="w-full aspect-square bg-gray-100 mb-4 overflow-hidden"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/></div>
-                      <p className="text-center font-serif text-gray-700 italic">{MEMORIES[currentSlide].caption}</p>
-                    </div>
-                  )}
-
-                  {/* STYLE 2: Film Strip */}
-                  {MEMORIES[currentSlide].style === "film-strip" && (
-                    <div className="bg-zinc-900 p-3 rounded-md shadow-2xl rotate-[-1deg] relative w-full max-w-[300px]">
-                      <div className="flex justify-between px-1 mb-2">
-                         {[...Array(6)].map((_,i)=><div key={i} className="w-3 h-2 bg-[#FFF5F8] rounded-sm"/>)}
+              {/* Area Frame Foto (Auto-Center pakai flex-1) */}
+              <div className="flex-1 flex justify-center items-center w-full relative">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSlide}
+                    initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, x: -50 }}
+                    transition={{ duration: 0.3, type: "spring" }}
+                    className="w-full flex justify-center items-center"
+                  >
+                    {/* STYLE 1: Polaroid Miring Kanan */}
+                    {MEMORIES[currentSlide].style === "polaroid-right" && (
+                      <div className="bg-white p-4 pb-12 rounded-lg shadow-xl rotate-3 relative w-full max-w-[280px]">
+                        <div className="w-full aspect-square bg-gray-100 mb-4 overflow-hidden"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/></div>
+                        <p className="text-center font-serif text-gray-700 italic">{MEMORIES[currentSlide].caption}</p>
                       </div>
-                      <div className="w-full aspect-[4/3] bg-black overflow-hidden border border-zinc-700"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover opacity-90" alt="Memory"/></div>
-                      <div className="flex justify-between px-1 mt-2 mb-3">
-                         {[...Array(6)].map((_,i)=><div key={i} className="w-3 h-2 bg-[#FFF5F8] rounded-sm"/>)}
+                    )}
+
+                    {/* STYLE 2: Film Strip */}
+                    {MEMORIES[currentSlide].style === "film-strip" && (
+                      <div className="bg-zinc-900 p-3 rounded-md shadow-2xl rotate-[-1deg] relative w-full max-w-[300px]">
+                        <div className="flex justify-between px-1 mb-2">
+                           {[...Array(6)].map((_,i)=><div key={i} className="w-3 h-2 bg-[#FFF5F8] rounded-sm"/>)}
+                        </div>
+                        <div className="w-full aspect-[4/3] bg-black overflow-hidden border border-zinc-700"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover opacity-90" alt="Memory"/></div>
+                        <div className="flex justify-between px-1 mt-2 mb-3">
+                           {[...Array(6)].map((_,i)=><div key={i} className="w-3 h-2 bg-[#FFF5F8] rounded-sm"/>)}
+                        </div>
+                        <p className="text-center font-mono text-zinc-300 text-sm">{MEMORIES[currentSlide].caption}</p>
                       </div>
-                      <p className="text-center font-mono text-zinc-300 text-sm">{MEMORIES[currentSlide].caption}</p>
-                    </div>
-                  )}
+                    )}
 
-                  {/* STYLE 3: Circle Elegant */}
-                  {MEMORIES[currentSlide].style === "circle-elegant" && (
-                    <div className="bg-pink-100 p-3 rounded-full shadow-[0_10px_30px_rgba(244,114,182,0.3)] relative w-[280px] h-[280px] flex items-center justify-center border-4 border-white">
-                      <Flower className="absolute -top-4 -right-4 w-12 h-12 text-pink-400 drop-shadow-md z-10" />
-                      <div className="w-full h-full rounded-full overflow-hidden border-4 border-pink-200">
-                        <img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/>
+                    {/* STYLE 3: Circle Elegant */}
+                    {MEMORIES[currentSlide].style === "circle-elegant" && (
+                      <div className="bg-pink-100 p-3 rounded-full shadow-[0_10px_30px_rgba(244,114,182,0.3)] relative w-[280px] h-[280px] flex items-center justify-center border-4 border-white mt-8">
+                        <Flower className="absolute -top-4 -right-4 w-12 h-12 text-pink-400 drop-shadow-md z-10" />
+                        <div className="w-full h-full rounded-full overflow-hidden border-4 border-pink-200">
+                          <img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/>
+                        </div>
+                        <div className="absolute -bottom-8 bg-white px-6 py-2 rounded-full shadow-md text-center w-max max-w-[280px]">
+                          <p className="font-serif text-pink-800 italic text-sm">{MEMORIES[currentSlide].caption}</p>
+                        </div>
                       </div>
-                      <div className="absolute -bottom-8 bg-white px-6 py-2 rounded-full shadow-md text-center w-max max-w-[280px]">
-                        <p className="font-serif text-pink-800 italic text-sm">{MEMORIES[currentSlide].caption}</p>
+                    )}
+
+                    {/* STYLE 4: Polaroid Miring Kiri */}
+                    {MEMORIES[currentSlide].style === "polaroid-left" && (
+                      <div className="bg-[#FAF8F5] p-4 pb-10 rounded-sm shadow-xl rotate-[-3deg] relative w-full max-w-[270px]">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 bg-pink-300/60 backdrop-blur-sm rotate-[-2deg] shadow-sm" />
+                        <div className="w-full aspect-square bg-gray-200 mb-4 overflow-hidden border border-gray-100"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/></div>
+                        <p className="text-center font-serif text-pink-900">{MEMORIES[currentSlide].caption}</p>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* STYLE 4: Polaroid Miring Kiri */}
-                  {MEMORIES[currentSlide].style === "polaroid-left" && (
-                    <div className="bg-[#FAF8F5] p-4 pb-10 rounded-sm shadow-xl rotate-[-3deg] relative w-full max-w-[270px]">
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 bg-pink-300/60 backdrop-blur-sm rotate-[-2deg] shadow-sm" />
-                      <div className="w-full aspect-square bg-gray-200 mb-4 overflow-hidden border border-gray-100"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/></div>
-                      <p className="text-center font-serif text-pink-900">{MEMORIES[currentSlide].caption}</p>
-                    </div>
-                  )}
+                    {/* STYLE 5: Bingkai Tebal */}
+                    {MEMORIES[currentSlide].style === "thick-frame" && (
+                      <div className="bg-white border-[10px] border-pink-200 p-2 rounded-3xl shadow-lg relative w-full max-w-[290px]">
+                        <div className="w-full aspect-[4/5] bg-gray-100 overflow-hidden rounded-2xl mb-4"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/></div>
+                        <p className="text-center font-sans font-bold text-pink-700 text-sm uppercase tracking-wider">{MEMORIES[currentSlide].caption}</p>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
-                  {/* STYLE 5: Bingkai Tebal */}
-                  {MEMORIES[currentSlide].style === "thick-frame" && (
-                    <div className="bg-white border-[10px] border-pink-200 p-2 rounded-3xl shadow-lg relative w-full max-w-[290px]">
-                      <div className="w-full aspect-[4/5] bg-gray-100 overflow-hidden rounded-2xl mb-4"><img src={MEMORIES[currentSlide].img} className="w-full h-full object-cover" alt="Memory"/></div>
-                      <p className="text-center font-sans font-bold text-pink-700 text-sm uppercase tracking-wider">{MEMORIES[currentSlide].caption}</p>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-
-              {/* Tanda / Indikator Bawah Pengganti Tombol Besar */}
-              <div className="mt-12 flex flex-col items-center gap-6">
+              {/* Tanda / Indikator Bawah & Tombol Navigasi */}
+              <div className="flex flex-col items-center gap-5 mb-4">
                 
-                {/* Dots Indicator (Seperti Instagram) */}
-                <div className="flex gap-2">
+                {/* Dots Indicator */}
+                <div className="flex gap-2 mb-2">
                   {MEMORIES.map((_, i) => (
                     <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === currentSlide ? 'w-6 bg-pink-500' : 'w-2 bg-pink-200'}`} />
                   ))}
                 </div>
 
-                {/* Tombol Simple / Tulisan Navigasi */}
-                <button 
-                  onClick={() => {
-                    if (currentSlide < MEMORIES.length - 1) setCurrentSlide(prev => prev + 1);
-                    else setStep(4);
-                  }} 
-                  className="bg-white/60 backdrop-blur-sm border border-pink-200 text-pink-700 px-6 py-2.5 rounded-full font-medium text-sm shadow-sm hover:bg-pink-100 active:scale-95 flex items-center gap-2 transition-all"
-                >
-                  {currentSlide < MEMORIES.length - 1 ? 'Ketuk untuk lanjut ➔' : 'Buka Pesan Spesial 💌'}
-                </button>
-              </div>
+                {/* Tombol Navigasi (Kembali & Lanjut) */}
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setCurrentSlide(prev => Math.max(0, prev - 1))}
+                    className={`bg-white/60 backdrop-blur-sm border border-pink-200 text-pink-700 p-3 rounded-full shadow-sm hover:bg-pink-100 active:scale-95 transition-all ${currentSlide === 0 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
 
+                  <button 
+                    onClick={() => {
+                      if (currentSlide < MEMORIES.length - 1) setCurrentSlide(prev => prev + 1);
+                      else setStep(4);
+                    }} 
+                    className="bg-white/60 backdrop-blur-sm border border-pink-200 text-pink-700 px-6 py-3 rounded-full font-medium text-sm shadow-sm hover:bg-pink-100 active:scale-95 flex items-center justify-center gap-2 transition-all w-[180px]"
+                  >
+                    {currentSlide < MEMORIES.length - 1 ? 'Ketuk untuk lanjut ➔' : 'Buka Pesan 💌'}
+                  </button>
+                </div>
+
+              </div>
             </motion.div>
           )}
 
